@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Row, Col, Select, Tabs, Switch, message, Card, Typography, Tooltip } from "antd";
+import { Row, Col, Select, Tabs, Switch, message, Card, Tooltip } from "antd";
 import { saveAs } from "file-saver";
 import Header from "@/components/Header";
 import EditorPanel from "@/components/EditorPanel";
@@ -18,12 +18,14 @@ export default function Page() {
   const [language, setLanguage] = useState<"java" | "csharp">("java");
   const [lombok, setLombok] = useState(true);
   const [entityMode, setEntityMode] = useState(false);
+  const [jsonProperty, setJsonProperty] = useState(true); // New toggle
   const [activeTab, setActiveTab] = useState("json-to-model");
 
   // Handle language change
   const handleLanguageChange = (lang: "java" | "csharp") => {
     setLanguage(lang);
-    setEntityMode(false); // reset entity mode
+    setEntityMode(false);
+    setJsonProperty(true); // reset JSON Property toggle
     if (lang === "csharp") setLombok(false); // Lombok only for Java
   };
 
@@ -34,7 +36,11 @@ export default function Page() {
         const json = JSON.parse(input);
         const result =
           language === "java"
-            ? jsonToJava(json, "RequestModel", { lombok, entity: entityMode })
+            ? jsonToJava(json, "RequestModel", {
+                lombok,
+                entity: entityMode,
+                jsonProperty,
+              })
             : jsonToCSharp(json, "RequestModel", { entity: entityMode });
         setOutput(result);
       } else {
@@ -104,13 +110,17 @@ export default function Page() {
         <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
           {/* Language Selector */}
           <Col>
-            <Select value={language} onChange={handleLanguageChange} style={{ width: 160 }}>
+            <Select
+              value={language}
+              onChange={handleLanguageChange}
+              style={{ width: 160 }}
+            >
               <Option value="java">Java</Option>
               <Option value="csharp">C#</Option>
             </Select>
           </Col>
 
-          {/* Show Mode/Lombok only on JSON → Model tab */}
+          {/* Show options only on JSON → Model tab */}
           {activeTab === "json-to-model" && language === "java" && (
             <>
               <Col>
@@ -122,7 +132,21 @@ export default function Page() {
               <Col>
                 <Tooltip title="Enable Lombok annotations (DTO only)">
                   Lombok:{" "}
-                  <Switch checked={lombok} onChange={setLombok} disabled={entityMode} />
+                  <Switch
+                    checked={lombok}
+                    onChange={setLombok}
+                    disabled={entityMode}
+                  />
+                </Tooltip>
+              </Col>
+              <Col>
+                <Tooltip title="Include @JsonProperty annotations for each field (DTO only)">
+                  JSON Property:{" "}
+                  <Switch
+                    checked={jsonProperty}
+                    onChange={setJsonProperty}
+                    disabled={entityMode} // Disabled for Entity mode
+                  />
                 </Tooltip>
               </Col>
             </>
